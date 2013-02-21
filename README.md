@@ -9,6 +9,9 @@ Example usage:
 <!-- language: lang-python -->
     
     from pgserver import PostgresServer
+    import time
+
+    data_dir = None
 
     pg = PostgresServer(data_dir)
 
@@ -23,7 +26,7 @@ Example usage:
     connection.commit()
     connection.close()
 
-If you do not specify a `data_dir` it will use a temporary directory
+If `data_dir is None` then it will use a temporary directory
 as you might use `:memory:` with SQLite.
 
 Multiple processes can interact with the same SQLite database file

@@ -52,7 +52,7 @@ class PostgresServer(object):
             database="template1"
         )
         try:
-            prep_connection.autocommit = True
+            prep_connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
             prep_cursor = prep_connection.cursor()
             prep_cursor.execute("CREATE DATABASE \"{0}\";".format(
                 database.replace("\"", "\"\"")))
