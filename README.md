@@ -1,4 +1,14 @@
+This allows you to run a Postgres server within your Python process.
+
+I love SQLite's ease of use when I need a database for something
+quick, but have become frustrated by its limitations. This is meant
+to serve some of the same purpose.
+
 Example usage:
+
+<!-- language: lang-python -->
+    
+    from pgserver import PostgresServer
 
     pg = PostgresServer(data_dir)
 
@@ -13,10 +23,17 @@ Example usage:
     connection.commit()
     connection.close()
 
-If you do not specify a `data_dir` it will use a temporary directory.
+If you do not specify a `data_dir` it will use a temporary directory
+as you might use `:memory:` with SQLite.
 
-If you system fails to allocated shared memory,
-you may need to increase the limits, as on OS X:
+Multiple processes can interact with the same SQLite database file
+simultaneously, but attempting to use the same `data_dir` from
+multiple `PostgresServer`s simultaneously is not supported.
+
+If you system fails to allocated shared memory, you may need to increase
+the limits, [as on OS X](http://support.apple.com/kb/HT4022):
+
+<!-- language: lang-bash -->
 
     sudo sysctl -w kern.sysv.shmall=65536
     sudo sysctl -w kern.sysv.shmmax=16777216
