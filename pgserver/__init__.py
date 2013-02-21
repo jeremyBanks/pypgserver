@@ -70,31 +70,6 @@ class PostgresServer(object):
 
     def __del__(self):
         self.process.terminate()
-        self.process.communicate()
         shutil.rmtree(self.socket_dir)
         if self.data_dir_is_temp:
             shutil.rmtree(self.data_dir)
-
-def main(data_dir=None):
-    # If you system fails to allocated shared memory,
-    # you may need to increase the limits, as on OS X:
-    #    sudo sysctl -w kern.sysv.shmall=65536
-    #    sudo sysctl -w kern.sysv.shmmax=16777216
-
-    pg = PostgresServer(data_dir)
-
-    connection = pg.psycopg2_connect()
-    cursor = connection.cursor()
-    
-    cursor.execute("CREATE TABLE IF NOT EXISTS times ( time int )");
-    cursor.execute("INSERT INTO times( time ) VALUES ( %s )", [int(time.time())])
-    cursor.execute("SELECT time FROM times")   
-    print cursor.fetchall()
-
-    connection.commit()
-    connection.close()
-
-if __name__ == "__main__":
-    import sys
-
-    sys.exit(main(*sys.argv[1:]))
