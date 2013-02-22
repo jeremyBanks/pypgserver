@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name="pgserver",
-    version="0.0.0.0",
+    version="0.0.0.1",
     packages=["pgserver"],
 
     url="https://github.com/jeremybanks/pypgserver",

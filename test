@@ -1,0 +1,2 @@
+# assumes this directory is a virtualenv
+bin/pip install . --upgrade && bin/python tests
