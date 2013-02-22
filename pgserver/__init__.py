@@ -3,6 +3,7 @@ import atexit
 import os
 import os.path
 import shutil
+import signal
 import subprocess
 import tempfile
 import threading
@@ -112,17 +113,9 @@ class PostgresServer(object):
         # If we rely on __del__, then it's possible that something
         # we rely on (such as the subprocess module) may have been
         # deleted.
-        atexit.register(WeakMethodPartial(self, "stop", except_unless_running=False))
+        atexit.register(WeakMethodPartial(self, "stop", except_unless_running=False, fast=True, blocking=True))
 
-    def stop(self, except_unless_running=True, blocking=False):
-        if not self.running:
-            if except_unless_running:
-                raise Exception("Server is not running.")
-            else:
-                return
-
-        self.process.terminate()
-
+    def stop(self, except_unless_running=True, fast=False, blocking=False):
         # Cleanup has a race condition due to the Postgres process
         # and this one trying to delete the same files in the same
         # directory at once.
@@ -132,11 +125,33 @@ class PostgresServer(object):
         # connections in the same thread may cause a deadlock,
         # so the default behaviour is to wait and perform the
         # cleanup in another thread.
+        #
+        # Unfortunately, this could allow Python to terminate before
+        # all of Postgres' processes do. For this reason, our atexit
+        # handler will block until Postgres is finished. It avoids
+        # the deadlock by specifying fast=True to kill current
+        # connections instead of waiting for them.
+
+        if not self.running:
+            if except_unless_running:
+                raise Exception("Server is not running.")
+            else:
+                if self._clean_thread:
+                    self._clean_thread.join()
+                return
+
+        # http://www.postgresql.org/docs/8.4/static/server-shutdown.html
+        if fast:
+            self.process.send_signal(signal.SIGINT)
+        else:
+            self.process.send_signal(signal.SIGTERM)
+
 
         if blocking:
             self._stop_clean()
+            self._clean_thread = None
         else:
-            threading.Thread(target=self._stop_clean).start()
+            self._clean_thread = threading.Thread(target=self._stop_clean).start()
 
         self.running = False
 
